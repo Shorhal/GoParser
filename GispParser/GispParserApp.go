@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/chromedp"
 )
@@ -44,13 +45,12 @@ func main() {
 
 		log.Fatal(err)
 	}
-	fmt.Println(len(allDataGrid))
+
 	pagesCount, err := strconv.Atoi(strings.Split(pagesInfo, " ")[3])
 	if err == nil {
 		fmt.Println("Error")
 	}
 
-	fmt.Println(pagesCount)
 	for i := 0; i < pagesCount; i++ {
 		if err := chromedp.Run(ctx,
 			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &dataGrid, chromedp.ByID),
@@ -61,7 +61,40 @@ func main() {
 		allDataGrid += dataGrid
 	}
 	//fmt.Println(allDataGrid)
+	fmt.Println(pagesCount)
 
-	fmt.Println(parseToOrg(allDataGrid))
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(allDataGrid))
+	if err != nil {
+		fmt.Println("No url found")
+		log.Fatal(err)
+	}
+
+	var Orgs []Org
+	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
+		fmt.Println("----------tr----------")
+		tempOrg := tr.Find("td").Map(func(i int, td *goquery.Selection) string {
+			text := strings.TrimSpace(td.Text())
+			return text
+		})
+		fmt.Println(tempOrg[0])
+
+		inn, err := strconv.Atoi(tempOrg[1])
+		if err == nil {
+			fmt.Println("Error")
+		}
+		ogrn, err := strconv.Atoi(tempOrg[2])
+		if err == nil {
+			fmt.Println("Error")
+		}
+		organization := Org{
+			tempOrg[0],
+			inn,
+			ogrn,
+			tempOrg[3],
+		}
+		Orgs = append(Orgs, organization)
+	})
+
+	fmt.Println(Orgs)
 
 }
