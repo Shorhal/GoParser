@@ -41,10 +41,10 @@ func parseToOrg(toParse string) []Org {
 	return Orgs
 }
 
-func parseToProd(toParse string) {
+func parseToProd(toParse string) []Prod {
 	doc := getHtmlDocumentReader(toParse)
 
-	var Prod []Org
+	var Prods []Prod
 	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
 		fmt.Println("----------tr----------")
 		tempOrg := tr.Find("td").Map(func(i int, td *goquery.Selection) string {
@@ -53,22 +53,29 @@ func parseToProd(toParse string) {
 		})
 		fmt.Println(tempOrg[0])
 
-		inn, err := strconv.Atoi(tempOrg[1])
+		OKPD2, err := strconv.Atoi(tempOrg[2])
 		if err == nil {
 			fmt.Println("Error")
 		}
-		ogrn, err := strconv.Atoi(tempOrg[2])
+		TNVED, err := strconv.Atoi(tempOrg[3])
 		if err == nil {
 			fmt.Println("Error")
 		}
-		organization := Org{
+		point, err := strconv.Atoi(tempOrg[5])
+		if err == nil {
+			fmt.Println("Error")
+		}
+		product := Prod{
 			tempOrg[0],
-			inn,
-			ogrn,
-			tempOrg[3],
+			tempOrg[1],
+			OKPD2,
+			TNVED,
+			tempOrg[4],
+			point,
 		}
-		Prod = append(Prod, organization)
+		Prods = append(Prods, product)
 	})
+	return Prods
 }
 
 func getHtmlDocumentReader(toRead string) *goquery.Document {
