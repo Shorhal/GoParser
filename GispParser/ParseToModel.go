@@ -22,11 +22,11 @@ func parseToOrg(toParse string) []Org {
 		fmt.Println(tempOrg[0])
 
 		inn, err := strconv.Atoi(tempOrg[1])
-		if err == nil {
+		if err != nil {
 			fmt.Println("Error")
 		}
 		ogrn, err := strconv.Atoi(tempOrg[2])
-		if err == nil {
+		if err != nil {
 			fmt.Println("Error")
 		}
 		organization := Org{
@@ -54,15 +54,15 @@ func parseToProd(toParse string) []Prod {
 		fmt.Println(tempOrg[0])
 
 		OKPD2, err := strconv.Atoi(tempOrg[2])
-		if err == nil {
+		if err != nil {
 			fmt.Println("Error")
 		}
 		TNVED, err := strconv.Atoi(tempOrg[3])
-		if err == nil {
+		if err != nil {
 			fmt.Println("Error")
 		}
 		point, err := strconv.Atoi(tempOrg[5])
-		if err == nil {
+		if err != nil {
 			fmt.Println("Error")
 		}
 		product := Prod{

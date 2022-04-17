@@ -7,12 +7,32 @@ import (
 	"gorm.io/gorm"
 )
 
-func connect() {
-	dsn := "sqlserver://KORIGOVI-PC/KorigovI:SQLEXPRESS@10.89.0.104:1433?database=Gisp"
+type DbContext struct {
+	db *gorm.DB
+}
+
+func connect(db *gorm.DB) {
+	dsn := "sqlserver://@localhost:52876?database=Gisp"
 
 	db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
 	if err != nil {
 		fmt.Println("filed connection")
+	} else {
+		fmt.Println("Success connect to MSSQL")
 	}
-	db.Migrator().CreateTable(&Org{})
+
+}
+
+func getAll(db *gorm.DB) []Org {
+	var result []Org
+	db.Find(&result)
+	return result
+}
+
+func createOrg(db *gorm.DB, data *[]Org) {
+	db.Create(data)
+}
+
+func updateAll(db *gorm.DB, data []Org) {
+
 }

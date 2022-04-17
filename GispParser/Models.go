@@ -8,7 +8,7 @@ type Org struct {
 }
 
 type Prod struct {
-	registryNumber  string
+	RegistyNumber   string
 	Name            string
 	OKPD2           int
 	TNVED           int
