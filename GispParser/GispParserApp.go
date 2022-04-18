@@ -8,12 +8,12 @@ import (
 
 	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/chromedp"
-	"gorm.io/driver/sqlserver"
-	"gorm.io/gorm"
+	//"gorm.io/driver/sqlserver"
+	//"gorm.io/gorm"
 )
 
 func main() {
-	var db *gorm.DB
+	/*var db *gorm.DB
 
 	dsn := "sqlserver://@localhost:52876?database=Gisp"
 	//Соединение с БД
@@ -22,7 +22,7 @@ func main() {
 		fmt.Println("filed connection")
 	} else {
 		fmt.Println("Success connect to MSSQL")
-	}
+	}*/
 
 	//Подготовка
 	ctx, cancel := chromedp.NewContext(
@@ -52,13 +52,29 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//pagesCount, err := strconv.Atoi(strings.Split(pagesInfo, " ")[3])
+	// Полученние ссылок на карточки предсприятий и их продукцию
+	var tableData string
+
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(url),
+		chromedp.SetAttributeValue(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, "style", "display: block", chromedp.ByID),
+		chromedp.Text(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, &pagesInfo),
+		chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tableData, chromedp.ByID),
+	); err != nil {
+
+		log.Fatal(err)
+	}
+
+	UrlData := getURLs(tableData)
+	fmt.Println(UrlData)
+
+	/*pagesCount, err := strconv.Atoi(strings.Split(pagesInfo, " ")[3])
 	if err != nil {
 		fmt.Println("Error")
 	}
 
 	//Сбор данных со страниц
-	/*for i := 1; i <= pagesCount; i++ {
+	for i := 1; i <= pagesCount; i++ {
 
 		if err := chromedp.Run(ctx,
 			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &dataGrid, chromedp.ByID),
@@ -69,10 +85,11 @@ func main() {
 		allDataGrid += dataGrid
 	}*/
 
-	Org := parseToOrg(dataGrid)
+	//Org := parseToOrg(dataGrid)
 	//Prod := parseToProd(prodDataGrid)
 
-	for _, element := range Org {
+	/*for _, element := range Org {
 		db.Create(element)
 	}
+	*/
 }

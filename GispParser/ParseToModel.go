@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func parseToOrg(toParse string) []Org {
+/*func parseToOrg(toParse string) []Org {
 	doc := getHtmlDocumentReader(toParse)
 
 	var Orgs []Org
@@ -31,15 +31,26 @@ func parseToOrg(toParse string) []Org {
 		}
 		organization := Org{
 			tempOrg[0],
+			tempOrg[0],
 			inn,
 			ogrn,
+			kpp,
+			rating,
+			tempOrg[3],
+			tempOrg[3],
+			tempOrg[3],
+			tempOrg[3],
+			tempOrg[3],
+			Index,
+			tempOrg[3],
+			tempOrg[3],
 			tempOrg[3],
 		}
 		Orgs = append(Orgs, organization)
 
 	})
 	return Orgs
-}
+}*/
 
 func parseToProd(toParse string) []Prod {
 	doc := getHtmlDocumentReader(toParse)
@@ -76,6 +87,22 @@ func parseToProd(toParse string) []Prod {
 		Prods = append(Prods, product)
 	})
 	return Prods
+}
+
+// Функция получения ссылок на карточку предприятия а также их продукции
+func getURLs(toParse string) []string {
+	doc := getHtmlDocumentReader(toParse)
+
+	var stri []string
+	//var URLs []URL
+	doc.Find("a").Each(func(i int, a *goquery.Selection) {
+		str, ok := a.Attr("href")
+		if ok {
+			fmt.Println("ok")
+		}
+		stri = append(stri, str)
+	})
+	return stri
 }
 
 func getHtmlDocumentReader(toRead string) *goquery.Document {

@@ -1,10 +1,21 @@
 package main
 
 type Org struct {
-	Name   string
-	INN    int
-	OGRN   int
-	Adress string
+	FullName                   string
+	ShortName                  string
+	INN                        int
+	OGRN                       int
+	KPP                        int
+	rating                     int
+	INDUSTRY                   string
+	Country                    string
+	Region                     string
+	City                       string
+	Adress                     string
+	Index                      int
+	GenDirector                string
+	ElectronicTradingPlatforms string
+	www                        string
 }
 
 type Prod struct {
@@ -14,4 +25,9 @@ type Prod struct {
 	TNVED           int
 	madeAccordingTo string
 	Points          int
+}
+
+type URL struct {
+	Org   string
+	Prods string
 }
