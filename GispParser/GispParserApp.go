@@ -73,20 +73,20 @@ func main() {
 
 	//Получение ссылок на карточки предприятий и список их продукции
 	UrlData := getURLs(tableData)
-	fmt.Println(UrlData)
 
-	/*
-		//Сбор данных со страниц
-		for i := 1; i <= pagesCount; i++ {
+	var OrgString string
+	var ProdsString string
+	URLProds := "https://gisp.gov.ru" + UrlData[0].Prods
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(UrlData[0].Org),
+		chromedp.OuterHTML(`body > main > div > div.content__inner > div > div:nth-child(2) > div > div > div`, &OrgString),
+		chromedp.Navigate(URLProds),
+		chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &ProdsString),
+	); err != nil {
+		log.Fatal(err)
+	}
 
-			if err := chromedp.Run(ctx,
-				chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &dataGrid, chromedp.ByID),
-			); err != nil {
-
-				log.Fatal(err)
-			}
-			allDataGrid += dataGrid
-		}*/
+	fmt.Println(ProdsString)
 
 	//Org := parseToOrg(dataGrid)
 	//Prod := parseToProd(prodDataGrid)
@@ -96,3 +96,5 @@ func main() {
 	}
 	*/
 }
+
+//Получение разметки-Информация об организаии и ее продукции

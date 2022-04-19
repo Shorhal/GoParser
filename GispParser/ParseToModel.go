@@ -12,44 +12,8 @@ import (
 /*func parseToOrg(toParse string) []Org {
 	doc := getHtmlDocumentReader(toParse)
 
-	var Orgs []Org
-	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
-		fmt.Println("----------tr----------")
-		tempOrg := tr.Find("td").Map(func(i int, td *goquery.Selection) string {
-			text := strings.TrimSpace(td.Text())
-			return text
-		})
-		fmt.Println(tempOrg[0])
 
-		inn, err := strconv.Atoi(tempOrg[1])
-		if err != nil {
-			fmt.Println("Error")
-		}
-		ogrn, err := strconv.Atoi(tempOrg[2])
-		if err != nil {
-			fmt.Println("Error")
-		}
-		organization := Org{
-			tempOrg[0],
-			tempOrg[0],
-			inn,
-			ogrn,
-			kpp,
-			rating,
-			tempOrg[3],
-			tempOrg[3],
-			tempOrg[3],
-			tempOrg[3],
-			tempOrg[3],
-			Index,
-			tempOrg[3],
-			tempOrg[3],
-			tempOrg[3],
-		}
-		Orgs = append(Orgs, organization)
-
-	})
-	return Orgs
+	return Org
 }*/
 
 func parseToProd(toParse string) []Prod {
@@ -99,16 +63,16 @@ func getURLs(toParse string) []URL {
 		var stri []string
 		td.Find("a").Each(func(i int, a *goquery.Selection) {
 			str, ok := a.Attr("href")
-			if ok {
-				fmt.Println("")
+			if !ok {
+				fmt.Println("Cannot get url")
 			}
 			stri = append(stri, str)
 		})
 
 		if stri != nil {
 			URLs = append(URLs, URL{
-				stri[0],
-				stri[1],
+				strings.TrimSpace(stri[1]),
+				strings.TrimSpace(stri[0]),
 			})
 		}
 
