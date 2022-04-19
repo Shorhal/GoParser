@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/emulation"
@@ -38,52 +40,53 @@ func main() {
 
 	url := "https://gisp.gov.ru/pp719v2/pub/org/"
 
-	var pagesInfo string
-	var dataGrid string
-	//var allDataGrid string
-	//Переход на главную страницу
-	if err := chromedp.Run(ctx,
-		chromedp.Navigate(url),
-		chromedp.SetAttributeValue(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, "style", "display: block", chromedp.ByID),
-		chromedp.Text(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, &pagesInfo),
-		chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &dataGrid, chromedp.ByID),
-	); err != nil {
-
-		log.Fatal(err)
-	}
-
 	// Полученние ссылок на карточки предсприятий и их продукцию
-	var tableData string
-
+	var pagesInfo string
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
 		chromedp.SetAttributeValue(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, "style", "display: block", chromedp.ByID),
 		chromedp.Text(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, &pagesInfo),
-		chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tableData, chromedp.ByID),
 	); err != nil {
 
 		log.Fatal(err)
 	}
 
-	UrlData := getURLs(tableData)
-	fmt.Println(UrlData)
-
-	/*pagesCount, err := strconv.Atoi(strings.Split(pagesInfo, " ")[3])
+	//Получение количества страниц
+	var tableData string
+	pagesCount, err := strconv.Atoi(strings.Split(pagesInfo, " ")[3])
 	if err != nil {
 		fmt.Println("Error")
 	}
 
-	//Сбор данных со страниц
+	//Получение разметки всех страниц
 	for i := 1; i <= pagesCount; i++ {
-
+		var tempContainer string
+		xpath := `//*[@aria-label="Page ` + strconv.Itoa(i) + `"]`
 		if err := chromedp.Run(ctx,
-			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &dataGrid, chromedp.ByID),
+			chromedp.Click(xpath),
+			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tempContainer, chromedp.ByID),
 		); err != nil {
-
 			log.Fatal(err)
 		}
-		allDataGrid += dataGrid
-	}*/
+		tableData += tempContainer
+	}
+
+	//Получение ссылок на карточки предприятий и список их продукции
+	UrlData := getURLs(tableData)
+	fmt.Println(UrlData)
+
+	/*
+		//Сбор данных со страниц
+		for i := 1; i <= pagesCount; i++ {
+
+			if err := chromedp.Run(ctx,
+				chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &dataGrid, chromedp.ByID),
+			); err != nil {
+
+				log.Fatal(err)
+			}
+			allDataGrid += dataGrid
+		}*/
 
 	//Org := parseToOrg(dataGrid)
 	//Prod := parseToProd(prodDataGrid)

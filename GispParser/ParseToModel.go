@@ -90,19 +90,31 @@ func parseToProd(toParse string) []Prod {
 }
 
 // Функция получения ссылок на карточку предприятия а также их продукции
-func getURLs(toParse string) []string {
+func getURLs(toParse string) []URL {
 	doc := getHtmlDocumentReader(toParse)
 
-	var stri []string
-	//var URLs []URL
-	doc.Find("a").Each(func(i int, a *goquery.Selection) {
-		str, ok := a.Attr("href")
-		if ok {
-			fmt.Println("ok")
+	//var stri []string
+	var URLs []URL
+	doc.Find("td").Each(func(i int, td *goquery.Selection) {
+		var stri []string
+		td.Find("a").Each(func(i int, a *goquery.Selection) {
+			str, ok := a.Attr("href")
+			if ok {
+				fmt.Println("")
+			}
+			stri = append(stri, str)
+		})
+
+		if stri != nil {
+			URLs = append(URLs, URL{
+				stri[0],
+				stri[1],
+			})
 		}
-		stri = append(stri, str)
+
 	})
-	return stri
+
+	return URLs
 }
 
 func getHtmlDocumentReader(toRead string) *goquery.Document {
