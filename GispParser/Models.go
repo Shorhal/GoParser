@@ -6,7 +6,7 @@ type Org struct {
 	INN                        int
 	OGRN                       int
 	KPP                        int
-	rating                     int
+	Rating                     int
 	INDUSTRY                   string
 	Country                    string
 	Region                     string

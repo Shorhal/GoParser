@@ -9,25 +9,137 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-/*func parseToOrg(toParse string) []Org {
+func check(toParse string) Org {
 	doc := getHtmlDocumentReader(toParse)
 
+	var OrgModel Org
 
-	return Org
-}*/
+	doc.Find("p").Each(func(i int, p *goquery.Selection) {
+		title := p.Find("span").Text()
+		value := strings.Split(p.Text(), ":")
+		fmt.Println(value[1])
+		fmt.Println(p.Text())
+
+		switch title {
+		case "Полное наименование предприятия:":
+			OrgModel.FullName = value[1]
+		case "Сокращенное наименование предприятия:":
+			OrgModel.ShortName = value[1]
+		case "ОГРН:":
+			ogrn, err := strconv.Atoi(value[1])
+			if err == nil {
+				fmt.Println("Error", value[1])
+			}
+			OrgModel.OGRN = ogrn
+		case "ИНН:":
+			inn, err := strconv.Atoi(value[1])
+			if err == nil {
+				fmt.Println("Error", value[1])
+			}
+			OrgModel.INN = inn
+		case "КПП:":
+			kpp, err := strconv.Atoi(value[1])
+			if err == nil {
+				fmt.Println("Error", value[1])
+			}
+
+			OrgModel.KPP = kpp
+		case "ОКВЭД 2:":
+			OrgModel.INDUSTRY = p.Text()
+		case "Страна":
+			OrgModel.Country = value[1]
+		case "Регион:":
+			OrgModel.Region = value[1]
+		case "Город:":
+			OrgModel.City = value[1]
+		case "Адрес:":
+			OrgModel.Adress = value[1]
+		case "Индес:":
+			index, err := strconv.Atoi(value[1])
+			if err == nil {
+				fmt.Println("Error", value[1])
+			}
+			OrgModel.Index = index
+		case "www:":
+			OrgModel.www = value[1]
+		}
+	})
+
+	rate, err := strconv.Atoi(doc.Find(".value").Text())
+	if err == nil {
+		fmt.Println("Error", doc.Find(".value").Text())
+	}
+
+	OrgModel.Rating = rate
+
+	return OrgModel
+}
+func parseToOrg(toParse string) Org {
+	doc := getHtmlDocumentReader(toParse)
+
+	var Organization Org
+	itemData := doc.Find("p").Map(func(i int, p *goquery.Selection) string {
+		text := strings.TrimSpace(p.Text())
+		return text
+	})
+
+	OGRN, err := strconv.Atoi(itemData[2])
+	if err != nil {
+		fmt.Println("Error", itemData[2])
+	}
+
+	INN, err := strconv.Atoi(itemData[3])
+	if err != nil {
+		fmt.Println("Error", itemData[3])
+	}
+
+	KPP, err := strconv.Atoi(itemData[4])
+	if err != nil {
+		fmt.Println("Error", itemData[4])
+	}
+
+	rate, err := strconv.Atoi(doc.Find(".value").Text())
+	if err != nil {
+		fmt.Println("Error", doc.Find(".value").Text())
+	}
+
+	Index, err := strconv.Atoi(itemData[10])
+	if err != nil {
+		fmt.Println("Error", itemData[10])
+	}
+
+	Organization = Org{
+		itemData[0],
+		itemData[1],
+		OGRN,
+		INN,
+		KPP,
+		rate,
+		itemData[5],
+		itemData[6],
+		itemData[7],
+		itemData[8],
+		itemData[9],
+		Index,
+		itemData[11],
+		itemData[12],
+		itemData[13],
+	}
+
+	return Organization
+}
 
 func parseToProd(toParse string) []Prod {
 	doc := getHtmlDocumentReader(toParse)
 
 	var Prods []Prod
 	doc.Find("tr").Each(func(i int, tr *goquery.Selection) {
-		fmt.Println("----------tr----------")
 		tempOrg := tr.Find("td").Map(func(i int, td *goquery.Selection) string {
 			text := strings.TrimSpace(td.Text())
 			return text
 		})
-		fmt.Println(tempOrg[0])
 
+		//convert to int
 		OKPD2, err := strconv.Atoi(tempOrg[2])
 		if err != nil {
 			fmt.Println("Error")
@@ -40,6 +152,7 @@ func parseToProd(toParse string) []Prod {
 		if err != nil {
 			fmt.Println("Error")
 		}
+
 		product := Prod{
 			tempOrg[0],
 			tempOrg[1],
