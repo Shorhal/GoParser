@@ -9,14 +9,12 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
-	//"github.com/jasonlvhit/gocron"
 	//"gorm.io/driver/sqlserver"
 	//"gorm.io/gorm"
 )
 
 func main() {
 
-	//gocron.Every(2).Minutes().Do(UpdateData)
 	/*var db *gorm.DB
 
 	dsn := "sqlserver://@localhost:52876?database=Gisp"
@@ -52,29 +50,19 @@ func main() {
 	}
 
 	//Получение количества страниц
-	var tableData string
 	pagesCount, err := strconv.Atoi(strings.Split(pagesInfo, " ")[3])
 	if err != nil {
 		fmt.Println("Error")
 	}
 
 	//Получение разметки всех страниц
-	for i := 1; i <= pagesCount; i++ {
-		var tempContainer string
-		xpath := `//*[@aria-label="Page ` + strconv.Itoa(i) + `"]`
-		if err := chromedp.Run(mainCtx,
-			chromedp.Click(xpath),
-			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tempContainer, chromedp.ByID),
-		); err != nil {
-			log.Fatal(err)
-		}
-		tableData += tempContainer
-	}
+	tableData := getHtmlFromAllPages(mainCtx, pagesCount)
 
 	//Получение ссылок на карточки предприятий и список их продукции
 	UrlData := getURLs(tableData)
 	fmt.Println(len(UrlData))
 
+	//Контекст для обхода всех ссылок
 	orgInfoCtx, cancel := chromedp.NewContext(
 		context.Background(),
 		chromedp.WithLogf(log.Printf),
@@ -84,6 +72,7 @@ func main() {
 	orgInfoCtx, cancel = context.WithTimeout(orgInfoCtx, 50*time.Second)
 	defer cancel()
 
+	//Обход и обработка всех ссылок
 	var Org []Org
 	var Prod []Prod
 	for _, item := range UrlData {
@@ -103,11 +92,25 @@ func main() {
 		Org = append(Org, _org)
 		Prod = append(Prod, _prod...)
 	}
+	fmt.Println(Org[0])
 
-	/*for _, element := range Org {
-		db.Create(element)
-	}
-	*/
+	//createOrg(db, Org)
+	//createProd(db, Prod)
 }
 
-//Получение разметки-Информация об организаии и ее продукции
+//Получение разметки со всех страниц
+func getHtmlFromAllPages(ctx context.Context, pagesCount int) string {
+	var htmlData string
+	for i := 1; i <= pagesCount; i++ {
+		var tempContainer string
+		xpath := `//*[@aria-label="Page ` + strconv.Itoa(i) + `"]`
+		if err := chromedp.Run(ctx,
+			chromedp.Click(xpath),
+			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tempContainer, chromedp.ByID),
+		); err != nil {
+			log.Fatal(err)
+		}
+		htmlData += tempContainer
+	}
+	return htmlData
+}
