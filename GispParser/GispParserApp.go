@@ -8,13 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/chromedp"
+	//"github.com/jasonlvhit/gocron"
 	//"gorm.io/driver/sqlserver"
 	//"gorm.io/gorm"
 )
 
 func main() {
+
+	//gocron.Every(2).Minutes().Do(UpdateData)
 	/*var db *gorm.DB
 
 	dsn := "sqlserver://@localhost:52876?database=Gisp"
@@ -27,22 +29,20 @@ func main() {
 	}*/
 
 	//Подготовка
-	ctx, cancel := chromedp.NewContext(
+	mainCtx, cancel := chromedp.NewContext(
 		context.Background(),
 		chromedp.WithLogf(log.Printf),
 	)
 	defer cancel()
 
-	ctx, cancel = context.WithTimeout(ctx, 20*time.Second)
+	mainCtx, cancel = context.WithTimeout(mainCtx, 20*time.Second)
 	defer cancel()
-
-	emulation.SetUserAgentOverride("WebScrapper 1.0")
 
 	url := "https://gisp.gov.ru/pp719v2/pub/org/"
 
 	// Полученние ссылок на карточки предсприятий и их продукцию
 	var pagesInfo string
-	if err := chromedp.Run(ctx,
+	if err := chromedp.Run(mainCtx,
 		chromedp.Navigate(url),
 		chromedp.SetAttributeValue(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, "style", "display: block", chromedp.ByID),
 		chromedp.Text(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, &pagesInfo),
@@ -62,7 +62,7 @@ func main() {
 	for i := 1; i <= pagesCount; i++ {
 		var tempContainer string
 		xpath := `//*[@aria-label="Page ` + strconv.Itoa(i) + `"]`
-		if err := chromedp.Run(ctx,
+		if err := chromedp.Run(mainCtx,
 			chromedp.Click(xpath),
 			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tempContainer, chromedp.ByID),
 		); err != nil {
@@ -73,23 +73,36 @@ func main() {
 
 	//Получение ссылок на карточки предприятий и список их продукции
 	UrlData := getURLs(tableData)
+	fmt.Println(len(UrlData))
 
-	var OrgString string
-	var ProdsString string
-	URLProds := "https://gisp.gov.ru" + UrlData[0].Prods
-	if err := chromedp.Run(ctx,
-		chromedp.Navigate(UrlData[0].Org),
-		chromedp.OuterHTML(`body > main > div > div.content__inner > div > div:nth-child(2) > div > div > div`, &OrgString),
-		chromedp.Navigate(URLProds),
-		chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &ProdsString),
-	); err != nil {
-		log.Fatal(err)
+	orgInfoCtx, cancel := chromedp.NewContext(
+		context.Background(),
+		chromedp.WithLogf(log.Printf),
+	)
+	defer cancel()
+
+	orgInfoCtx, cancel = context.WithTimeout(orgInfoCtx, 50*time.Second)
+	defer cancel()
+
+	var Org []Org
+	var Prod []Prod
+	for _, item := range UrlData {
+		var OrgHtmlString string
+		var ProdsHtmlString string
+		URLProds := "https://gisp.gov.ru" + item.Prods
+		if err := chromedp.Run(orgInfoCtx,
+			chromedp.Navigate(item.Org),
+			chromedp.OuterHTML(`body > main > div > div.content__inner > div > div:nth-child(2) > div > div > div`, &OrgHtmlString),
+			chromedp.Navigate(URLProds),
+			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &ProdsHtmlString),
+		); err != nil {
+			log.Fatal(err)
+		}
+		_org := check(OrgHtmlString)
+		_prod := parseToProd(ProdsHtmlString)
+		Org = append(Org, _org)
+		Prod = append(Prod, _prod...)
 	}
-
-	fmt.Println(ProdsString)
-
-	//Org := parseToOrg(dataGrid)
-	//Prod := parseToProd(prodDataGrid)
 
 	/*for _, element := range Org {
 		db.Create(element)
