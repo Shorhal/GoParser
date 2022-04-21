@@ -33,6 +33,6 @@ func createOrg(db *gorm.DB, data *[]Org) {
 	db.Create(data)
 }
 
-func updateAll(db *gorm.DB, data []Org) {
-
+func createProds(db *gorm.DB, data *[]Prod) {
+	db.Create(data)
 }
