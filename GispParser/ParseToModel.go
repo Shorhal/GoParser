@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func check(toParse string) Org {
+func parseToOrg(toParse string) Org {
 	doc := getHtmlDocumentReader(toParse)
 
 	var OrgModel Org
@@ -74,60 +74,6 @@ func check(toParse string) Org {
 
 	return OrgModel
 }
-func parseToOrg(toParse string) Org {
-	doc := getHtmlDocumentReader(toParse)
-
-	var Organization Org
-	itemData := doc.Find("p").Map(func(i int, p *goquery.Selection) string {
-		text := strings.TrimSpace(p.Text())
-		return text
-	})
-
-	OGRN, err := strconv.Atoi(itemData[2])
-	if err != nil {
-		fmt.Println("Error", itemData[2])
-	}
-
-	INN, err := strconv.Atoi(itemData[3])
-	if err != nil {
-		fmt.Println("Error", itemData[3])
-	}
-
-	KPP, err := strconv.Atoi(itemData[4])
-	if err != nil {
-		fmt.Println("Error", itemData[4])
-	}
-
-	rate, err := strconv.Atoi(doc.Find(".value").Text())
-	if err != nil {
-		fmt.Println("Error", doc.Find(".value").Text())
-	}
-
-	Index, err := strconv.Atoi(itemData[10])
-	if err != nil {
-		fmt.Println("Error", itemData[10])
-	}
-
-	Organization = Org{
-		itemData[0],
-		itemData[1],
-		OGRN,
-		INN,
-		KPP,
-		rate,
-		itemData[5],
-		itemData[6],
-		itemData[7],
-		itemData[8],
-		itemData[9],
-		Index,
-		itemData[11],
-		itemData[12],
-		itemData[13],
-	}
-
-	return Organization
-}
 
 func parseToProd(toParse string) []Prod {
 	doc := getHtmlDocumentReader(toParse)
@@ -142,15 +88,15 @@ func parseToProd(toParse string) []Prod {
 		//convert to int
 		OKPD2, err := strconv.Atoi(tempOrg[2])
 		if err != nil {
-			fmt.Println("Error")
+			fmt.Println("Error -", tempOrg[2])
 		}
 		TNVED, err := strconv.Atoi(tempOrg[3])
 		if err != nil {
-			fmt.Println("Error")
+			fmt.Println("Error -", tempOrg[3])
 		}
 		point, err := strconv.Atoi(tempOrg[5])
 		if err != nil {
-			fmt.Println("Error")
+			fmt.Println("Error -", tempOrg[5])
 		}
 
 		product := Prod{

@@ -26,9 +26,12 @@ func main() {
 		fmt.Println("Success connect to MSSQL")
 	}*/
 
+	actx, cancel := chromedp.NewExecAllocator(
+		context.Background(), append(chromedp.DefaultExecAllocatorOptions[:], chromedp.Flag("headless", false))...,
+	)
 	//Подготовка
 	mainCtx, cancel := chromedp.NewContext(
-		context.Background(),
+		actx,
 		chromedp.WithLogf(log.Printf),
 	)
 	defer cancel()
@@ -38,7 +41,7 @@ func main() {
 
 	url := "https://gisp.gov.ru/pp719v2/pub/org/"
 
-	// Полученние ссылок на карточки предсприятий и их продукцию
+	//получение количества страниц с информацие об организациях
 	var pagesInfo string
 	if err := chromedp.Run(mainCtx,
 		chromedp.Navigate(url),
@@ -56,56 +59,90 @@ func main() {
 	}
 
 	//Получение разметки всех страниц
-	tableData := getHtmlFromAllPages(mainCtx, pagesCount)
+	tableData := getHtmlFromOrgTablePages(mainCtx, pagesCount)
 
 	//Получение ссылок на карточки предприятий и список их продукции
 	UrlData := getURLs(tableData)
 	fmt.Println(len(UrlData))
 
-	//Контекст для обхода всех ссылок
-	orgInfoCtx, cancel := chromedp.NewContext(
-		context.Background(),
-		chromedp.WithLogf(log.Printf),
-	)
-	defer cancel()
-
-	orgInfoCtx, cancel = context.WithTimeout(orgInfoCtx, 50*time.Second)
-	defer cancel()
-
 	//Обход и обработка всех ссылок
-	var Org []Org
 	var Prod []Prod
 	for _, item := range UrlData {
-		var OrgHtmlString string
-		var ProdsHtmlString string
-		URLProds := "https://gisp.gov.ru" + item.Prods
-		if err := chromedp.Run(orgInfoCtx,
-			chromedp.Navigate(item.Org),
-			chromedp.OuterHTML(`body > main > div > div.content__inner > div > div:nth-child(2) > div > div > div`, &OrgHtmlString),
-			chromedp.Navigate(URLProds),
-			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &ProdsHtmlString),
+
+		URLToProd := "https://gisp.gov.ru" + item.Prods
+		Prod = append(Prod, goToProdUrl(mainCtx, URLToProd)...)
+	}
+
+	fmt.Println(Prod[0], "------")
+}
+
+//Функция получения организации по ссылке
+func goToOrgUrl(ctx context.Context, url string, OrgList *[]Org) {
+
+	var pageHtml string
+
+	cloneCtx, cancel := chromedp.NewContext(ctx)
+	defer cancel()
+	fmt.Printf("%s is opening in a new tab\n", url)
+	chromedp.Run(cloneCtx,
+		chromedp.Navigate(url),
+		chromedp.OuterHTML(`body > main > div > div.content__inner > div > div:nth-child(2) > div > div > div`, &pageHtml),
+	)
+
+}
+
+//Функция получения продукций по ссылке
+func goToProdUrl(ctx context.Context, url string) []Prod {
+
+	var htmlData string
+	var pagesInfo string
+
+	cloneCtx, cancel := chromedp.NewContext(ctx)
+	defer cancel()
+	fmt.Printf("%s is opening in a new tab\n", url)
+	//Количество страниц
+	if err := chromedp.Run(cloneCtx,
+		chromedp.Navigate(url),
+		chromedp.SetAttributeValue(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, "style", "display: block", chromedp.ByID),
+		chromedp.Text(`#datagrid > div > div.dx-datagrid-pager.dx-pager > div.dx-pages > div.dx-info`, &pagesInfo),
+	); err != nil {
+
+		panic(err)
+	}
+
+	var pagesCount int
+
+	pagesCount, err := strconv.Atoi(strings.Split(pagesInfo, " ")[3])
+	if err != nil {
+		fmt.Println("Error")
+	}
+	//обход страниц
+	for i := 1; i <= pagesCount; i++ {
+		var tempContainer string
+		xpath := `//*[@aria-label="Page ` + strconv.Itoa(i) + `"]`
+		if err := chromedp.Run(cloneCtx,
+			chromedp.Click(xpath),
+			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tempContainer),
 		); err != nil {
 			log.Fatal(err)
 		}
-		_org := check(OrgHtmlString)
-		_prod := parseToProd(ProdsHtmlString)
-		Org = append(Org, _org)
-		Prod = append(Prod, _prod...)
+		htmlData += tempContainer
 	}
-	fmt.Println(Org[0])
 
-	//createOrg(db, Org)
-	//createProd(db, Prod)
+	res := parseToProd(htmlData)
+	return res
 }
 
-//Получение разметки со всех страниц
-func getHtmlFromAllPages(ctx context.Context, pagesCount int) string {
+//Функция получения разметки со всех страниц с информацией об организациях
+func getHtmlFromOrgTablePages(ctx context.Context, pagesCount int) string {
+
 	var htmlData string
 	for i := 1; i <= pagesCount; i++ {
 		var tempContainer string
 		xpath := `//*[@aria-label="Page ` + strconv.Itoa(i) + `"]`
 		if err := chromedp.Run(ctx,
 			chromedp.Click(xpath),
+			chromedp.WaitVisible(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`),
 			chromedp.OuterHTML(`#datagrid > div > div.dx-datagrid-rowsview.dx-scrollable.dx-visibility-change-handler.dx-scrollable-both.dx-scrollable-simulated.dx-scrollable-customizable-scrollbars > div > div > div.dx-scrollable-content > div > table`, &tempContainer, chromedp.ByID),
 		); err != nil {
 			log.Fatal(err)
